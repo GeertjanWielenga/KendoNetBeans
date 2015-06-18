@@ -14,13 +14,14 @@ import org.netbeans.api.lexer.TokenSequence;
 import org.netbeans.modules.csl.api.CodeCompletionContext;
 import org.netbeans.modules.csl.api.CompletionProposal;
 import org.netbeans.modules.csl.api.ElementHandle;
-import org.netbeans.modules.csl.api.ElementKind;
 import org.netbeans.modules.csl.spi.ParserResult;
 import org.netbeans.modules.javascript2.editor.api.lexer.JsTokenId;
 import org.netbeans.modules.javascript2.editor.api.lexer.LexUtilities;
 import org.netbeans.modules.javascript2.editor.spi.CompletionContext;
 import org.netbeans.modules.javascript2.editor.spi.CompletionProvider;
 import org.openide.awt.StatusDisplayer;
+import org.openide.filesystems.FileObject;
+import org.openide.filesystems.FileUtil;
 import org.openide.modules.InstalledFileLocator;
 
 /**
@@ -30,28 +31,18 @@ import org.openide.modules.InstalledFileLocator;
 @CompletionProvider.Registration(priority = 21)
 public class KendoUICodeCompletion implements CompletionProvider {
 
-    private static final String[] FILE_LOCATIONS = new String[]{
-        "docs/autocomplete.md",
-        "docs/button.md",
-        "docs/calendar.md",
-        "docs/colorpalette.md",
-        "docs/colorpicker.md",
-        "docs/combobox.md",
-        "docs/contextmenu.md",
-        "docs/datepicker.md",
-        "docs/datetimepicker.md",
-        "docs/draggable.md",
-        "docs/dropdownlist.md",
-        "docs/droptarget.md",
-        "docs/droptargetarea.md",
-        "docs/timepicker.md",
-    }; //NOI18N
-//    private static final String FILE_LOCATION = "docs/kendoui-properties.xml"; //NOI18N
-    private static List<File> kendoPropertyFiles = new ArrayList<File>();
-
+    private static final List<File> kendoPropertyFiles = new ArrayList<File>();
     private static synchronized List<File> getDataFiles() {
-        for (String FILE_LOCATION : FILE_LOCATIONS) {
-            kendoPropertyFiles.add((InstalledFileLocator.getDefault().locate(FILE_LOCATION, "org.netbeans.modules.javascript2.kendo", false))); //NOI18N
+        File kendoUIFolder = InstalledFileLocator.getDefault().locate(
+                "docs/api/javascript/ui",
+                "org.netbeans.modules.javascript2.kendo",
+                false);
+        for (FileObject fo : FileUtil.toFileObject(kendoUIFolder).getChildren()) {
+            String name = fo.getNameExt();
+            kendoPropertyFiles.add((InstalledFileLocator.getDefault().locate(
+                    "docs/api/javascript/ui/" + name,
+                    "org.netbeans.modules.javascript2.kendo",
+                    false))); //NOI18N
         }
         return kendoPropertyFiles;
     }
@@ -117,7 +108,7 @@ public class KendoUICodeCompletion implements CompletionProvider {
         }
 
         String fqnWithDot = sb.toString();
-        String fqn = fqnWithDot.substring(1);
+        String fqn = fqnWithDot.substring(1).replace(".ui.", "");
         Map<String, Collection<KendoUIDataItem>> data = getData();
         Collection<KendoUIDataItem> items = data.get(fqn);
         int anchorOffset = eOffset - ccContext.getPrefix().length();

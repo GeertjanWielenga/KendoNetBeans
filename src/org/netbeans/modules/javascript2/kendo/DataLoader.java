@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Formatter;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -40,7 +39,7 @@ public class DataLoader extends DefaultHandler {
         for (File file : files) {
             try {
                 String html = new Markdown4jProcessor().process(file);
-                System.out.println("html = " + html);
+//                System.out.println("html = " + html);
                 try {
                     long start = System.currentTimeMillis();
 //                SAXParserFactory factory = SAXParserFactory.newInstance();
@@ -144,7 +143,7 @@ public class DataLoader extends DefaultHandler {
         public void handleText(char[] text, int position) {
             this.text = text;
             if (inHeader && level == 1) {
-                componentName = new String(text);
+                componentName = new String(text).replace(".ui.", "");
             }
             if (inHeader && level == 3) {
                 attributeName = new String(text);
@@ -162,7 +161,7 @@ public class DataLoader extends DefaultHandler {
                         && !Character.isUpperCase(attributeName.charAt(0))) {
                     items.add(item);
                 }
-                System.out.print(level + ": " + new String(text));
+//                System.out.print(level + ": " + new String(text));
 
 //                System.out.print(level + ": " + new String(text));
             }
