@@ -33,9 +33,19 @@ public class KendoUICodeCompletion implements CompletionProvider {
     private static final String[] FILE_LOCATIONS = new String[]{
         "docs/autocomplete.md",
         "docs/button.md",
+        "docs/calendar.md",
         "docs/colorpalette.md",
+        "docs/colorpicker.md",
+        "docs/combobox.md",
+        "docs/contextmenu.md",
+        "docs/datepicker.md",
+        "docs/datetimepicker.md",
+        "docs/draggable.md",
+        "docs/dropdownlist.md",
+        "docs/droptarget.md",
+        "docs/droptargetarea.md",
         "docs/timepicker.md",
-        "docs/calendar.md"}; //NOI18N
+    }; //NOI18N
 //    private static final String FILE_LOCATION = "docs/kendoui-properties.xml"; //NOI18N
     private static List<File> kendoPropertyFiles = new ArrayList<File>();
 
