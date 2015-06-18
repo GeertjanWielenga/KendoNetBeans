@@ -25,7 +25,7 @@ import org.openide.modules.InstalledFileLocator;
 
 /**
  *
- * @author Petr Pisl
+ * @author Petr Pisl and Geertjan Wielenga
  */
 @CompletionProvider.Registration(priority = 21)
 public class KendoUICodeCompletion implements CompletionProvider {

@@ -2,7 +2,7 @@ package org.netbeans.modules.javascript2.kendo;
 
 /**
  *
- * @author Petr Pisl
+ * @author Petr Pisl and Geertjan Wielenga
  */
 public class KendoUIDataItem {
     
@@ -55,9 +55,5 @@ public class KendoUIDataItem {
         }
         return true;
     }
-
-
-    
-    
     
 }

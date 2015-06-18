@@ -25,7 +25,7 @@ import org.xml.sax.helpers.DefaultHandler;
 
 /**
  *
- * @author Petr Pisl
+ * @author Geertjan Wielenga
  */
 public class DataLoader extends DefaultHandler {
 
