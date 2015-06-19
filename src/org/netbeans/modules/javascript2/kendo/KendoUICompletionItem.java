@@ -7,6 +7,7 @@ import org.netbeans.modules.csl.api.ElementHandle;
 import org.netbeans.modules.csl.api.ElementKind;
 import org.netbeans.modules.csl.api.HtmlFormatter;
 import org.netbeans.modules.csl.api.Modifier;
+import org.openide.util.ImageUtilities;
 import org.openide.util.NbBundle.Messages;
 
 /**
@@ -81,7 +82,7 @@ public class KendoUICompletionItem implements CompletionProposal {
 
     @Override
     public ImageIcon getIcon() {
-        return null;
+        return ImageUtilities.loadImageIcon("org/netbeans/modules/javascript2/kendo/kendo.jpg", true);
     }
 
     @Override
