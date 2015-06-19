@@ -13,7 +13,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.text.MutableAttributeSet;
 import javax.swing.text.html.HTML;
-import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
 import org.markdown4j.Markdown4jProcessor;
 import org.openide.util.Exceptions;
@@ -28,8 +27,6 @@ public class DataLoader {
 
     private static Map<String, Collection<KendoUIDataItem>> result = new HashMap<String, Collection<KendoUIDataItem>>();
 
-    private static HTMLDocument htmlDoc = new HTMLDocument();
-
     public static Map<String, Collection<KendoUIDataItem>> getData(List<File> files) {
         result.clear();
         for (File file : files) {
@@ -38,7 +35,6 @@ public class DataLoader {
                 try {
                     long start = System.currentTimeMillis();
                     HTMLEditorKit.Parser parser = new HTMLParse().getParser();
-                    htmlDoc.setParser(parser);
                     parser.parse(new StringReader(html), new HTMLParseLister(html), true);
                     long end = System.currentTimeMillis();
                     LOGGER.log(Level.FINE, "Loading data from file took {0}ms ", (end - start)); //NOI18N
