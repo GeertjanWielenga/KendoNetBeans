@@ -2,44 +2,56 @@ package org.netbeans.modules.javascript2.kendo;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.StringReader;
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javax.swing.text.MutableAttributeSet;
-import javax.swing.text.html.HTML;
-import javax.swing.text.html.HTMLEditorKit;
-import org.markdown4j.Markdown4jProcessor;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import org.openide.filesystems.FileUtil;
 import org.openide.util.Exceptions;
 
-/**
- *
- * @author Geertjan Wielenga
- */
 public class DataLoader {
 
-    private static final Logger LOGGER = Logger.getLogger(DataLoader.class.getName());
+    private static final Set<KendoDataItem> result = new HashSet<KendoDataItem>();
 
-    private static Map<String, Collection<KendoUIDataItem>> result = new HashMap<String, Collection<KendoUIDataItem>>();
-
-    public static Map<String, Collection<KendoUIDataItem>> getData(List<File> files) {
+    public static Set<KendoDataItem> getData(List<File> files, int type) {
         result.clear();
         for (File file : files) {
             try {
-                String html = new Markdown4jProcessor().process(file);
-                try {
-                    long start = System.currentTimeMillis();
-                    HTMLEditorKit.Parser parser = new HTMLParse().getParser();
-                    parser.parse(new StringReader(html), new HTMLParseLister(html), true);
-                    long end = System.currentTimeMillis();
-                    LOGGER.log(Level.FINE, "Loading data from file took {0}ms ", (end - start)); //NOI18N
-                } catch (IOException ex) {
-                    Exceptions.printStackTrace(ex);
+                String fileContent = FileUtil.toFileObject(file).asText();
+                //Title:
+                String titleExpression = "title: [A-Za-z]+";
+                Pattern titlePattern = Pattern.compile(titleExpression);
+                Matcher titleMatcher = titlePattern.matcher(fileContent);
+                //Attribute:
+                String attributeExpression = "\\n### [A-Za-z.]+.*?###";
+                Pattern attributePattern = Pattern.compile(attributeExpression, Pattern.DOTALL);
+                Matcher attributeMatcher = attributePattern.matcher(fileContent);
+                //Finders:
+                //http://stackoverflow.com/questions/5516119/regular-expression-to-match-characters-at-beginning-of-line-only
+                if (titleMatcher.find()) {
+                    String formattedTitle = titleMatcher.group().replace("title: ", "kendo");
+                    if (type == 1) {
+                        result.add(new KendoDataItem(null, formattedTitle, null, escapeHTML(fileContent), null));
+                    } else if (type == 2) {
+                        while (attributeMatcher.find()) {
+                            String attribute = attributeMatcher.group();
+                            String lines[] = attribute.split("\\r?\\n");
+                            String attributeName = null;
+                            String attributeDescription = null;
+                            StringBuilder attributeDescriptionBuilder = new StringBuilder();
+                            for (int i = 0; i < lines.length; i++) {
+                                String line = lines[i];
+                                if (i==1){
+                                    attributeName = line.replaceAll("### ", " ");
+                                } else if (!line.isEmpty()){
+                                    attributeDescriptionBuilder.append(line);
+                                }
+                            }
+                            attributeDescription = attributeDescriptionBuilder.toString().replaceAll("###", "");
+                            result.add(new KendoDataItem(formattedTitle, attributeName, null, attributeDescription, null));
+                        }
+                    }
                 }
             } catch (IOException ex) {
                 Exceptions.printStackTrace(ex);
@@ -48,110 +60,21 @@ public class DataLoader {
         return result;
     }
 
-    static class HTMLParseLister extends HTMLEditorKit.ParserCallback {
-
-        private boolean inHeader = false;
-        int startPos = -1;
-        private int level = 0;
-        private final String html;
-        private static String lineSeparator
-                = System.getProperty("line.separator", "\r\n");
-        private char[] text;
-
-        private HTMLParseLister(String html) {
-            this.html = html;
-        }
-
-        @Override
-        public void handleStartTag(HTML.Tag tag,
-                MutableAttributeSet attributes, int position) {
-            int newLevel = 0;
-            if (tag == HTML.Tag.H1) {
-                newLevel = 1;
-            } else if (tag == HTML.Tag.H2) {
-                newLevel = 2;
-            } else if (tag == HTML.Tag.H3) {
-                newLevel = 3;
-            } else if (tag == HTML.Tag.H4) {
-                newLevel = 4;
-            } else if (tag == HTML.Tag.H5) {
-                newLevel = 5;
-            } else if (tag == HTML.Tag.H6) {
-                newLevel = 6;
-            } else if (tag == HTML.Tag.PRE) {
-                newLevel = 7;
+    //http://stackoverflow.com/questions/9580684/how-to-retrieve-title-of-a-html-with-the-help-of-htmleditorkit
+    public static String escapeHTML(String s) {
+        StringBuilder out = new StringBuilder(Math.max(16, s.length()));
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            if (c > 127 || c == '"' || c == '<' || c == '>' || c == '&') {
+                out.append("&#");
+                out.append((int) c);
+                out.append(';');
             } else {
-                return;
-            }
-            this.inHeader = true;
-            this.level = newLevel;
-        }
-
-        @Override
-        public void handleEndTag(HTML.Tag tag, int position) {
-            if (tag == HTML.Tag.H1 || tag == HTML.Tag.H2
-                    || tag == HTML.Tag.H3 || tag == HTML.Tag.H4
-                    || tag == HTML.Tag.H5 || tag == HTML.Tag.H6 || tag == HTML.Tag.PRE) {
-                inHeader = false;
+                out.append(c);
             }
         }
-
-        Set<KendoUIDataItem> items = new HashSet<KendoUIDataItem>();
-        String componentName = null;
-        String attributeName = null;
-        String explanation = null;
-        String code = null;
-
-        @Override
-        public void handleText(char[] text, int position) {
-            this.text = text;
-            if (inHeader && level == 1) {
-                componentName = new String(text).replace(".ui.", "");
-            }
-            if (inHeader && level == 3) {
-                attributeName = new String(text);
-            }
-            if (level == 4) {
-                explanation = "<h3>"+new String(text)+"</h3>";
-            }
-            if (level == 7) {
-                code = escapeHTML(new String(text));
-                KendoUIDataItem item = new KendoUIDataItem(attributeName, null, 
-                        explanation+"<p>"+code, null);
-                if (!items.contains(item)
-                        && attributeName != null
-                        && !attributeName.startsWith("(")
-                        && !Character.isUpperCase(attributeName.charAt(0))) {
-                    items.add(item);
-                }
-            }
-            result.put(componentName, items);
-        }
-
-        //http://stackoverflow.com/questions/9580684/how-to-retrieve-title-of-a-html-with-the-help-of-htmleditorkit
-        public static String escapeHTML(String s) {
-            StringBuilder out = new StringBuilder(Math.max(16, s.length()));
-            for (int i = 0; i < s.length(); i++) {
-                char c = s.charAt(i);
-                if (c > 127 || c == '"' || c == '<' || c == '>' || c == '&') {
-                    out.append("&#");
-                    out.append((int) c);
-                    out.append(';');
-                } else {
-                    out.append(c);
-                }
-            }
-            String addBreak = out.toString().replace("\n", "<br />\n");;
-            return addBreak;
-        }
-
-    }
-
-    public static class HTMLParse extends HTMLEditorKit {
-        @Override
-        public HTMLEditorKit.Parser getParser() {
-            return super.getParser();
-        }
+        String addBreak = out.toString().replace("\n", "<br />\n");;
+        return addBreak;
     }
 
 }

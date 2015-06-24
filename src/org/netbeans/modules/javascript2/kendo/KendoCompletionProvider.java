@@ -5,9 +5,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.netbeans.api.lexer.Token;
 import org.netbeans.api.lexer.TokenHierarchy;
 import org.netbeans.api.lexer.TokenSequence;
@@ -24,40 +24,49 @@ import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.modules.InstalledFileLocator;
 
-/**
- *
- * @author Petr Pisl and Geertjan Wielenga
- */
-@CompletionProvider.Registration(priority = 21)
-public class KendoUICodeCompletion implements CompletionProvider {
+@CompletionProvider.Registration(priority = 20)
+public class KendoCompletionProvider implements CompletionProvider {
 
-    private static final List<File> kendoPropertyFiles = new ArrayList<File>();
+    private static final List<File> demoPropertyFiles = new ArrayList<File>();
 
     private static synchronized List<File> getDataFiles() {
-        File kendoUIFolder = InstalledFileLocator.getDefault().locate(
+        File demoDataFolder = InstalledFileLocator.getDefault().locate(
                 "docs/api/javascript/ui",
-                "org.netbeans.modules.javascript2.kendo",
+                "org.demo",
                 false);
-        for (FileObject fo : FileUtil.toFileObject(kendoUIFolder).getChildren()) {
+        for (FileObject fo : FileUtil.toFileObject(demoDataFolder).getChildren()) {
             String name = fo.getNameExt();
-            kendoPropertyFiles.add((InstalledFileLocator.getDefault().locate(
+            demoPropertyFiles.add((InstalledFileLocator.getDefault().locate(
                     "docs/api/javascript/ui/" + name,
-                    "org.netbeans.modules.javascript2.kendo",
-                    false))); //NOI18N
+                    "org.demo",
+                    false)));
         }
-        return kendoPropertyFiles;
+        return demoPropertyFiles;
     }
 
-    private static HashMap<String, Collection<KendoUIDataItem>> ccData = null;
+    private synchronized static Set<KendoDataItem> getComponents() {
+        return DataLoader.getData(getDataFiles(), 1);
+    }
 
-    private synchronized static Map<String, Collection<KendoUIDataItem>> getData() {
-        return DataLoader.getData(getDataFiles());
+    private synchronized static Set<KendoDataItem> getAttributes() {
+        return DataLoader.getData(getDataFiles(), 2);
     }
 
     @Override
-    public List<CompletionProposal> complete(CodeCompletionContext ccContext, CompletionContext jsCompletionContext, String prefix) {
-        if (jsCompletionContext == CompletionContext.OBJECT_PROPERTY_NAME) {
-            // find the object that can be configured
+    public List<CompletionProposal> complete(
+            CodeCompletionContext ccContext,
+            CompletionContext jsCompletionContext,
+            String prefix) {
+        List<CompletionProposal> result = new ArrayList<CompletionProposal>();
+        if (jsCompletionContext == CompletionContext.OBJECT_PROPERTY) {
+            int caretOffset = ccContext.getCaretOffset();
+            Set<KendoDataItem> components = getComponents();
+            for (KendoDataItem item : components) {
+                if (item.getName().startsWith(prefix)) {
+                    result.add(KendoCompletionProposal.createDemoItem(item, caretOffset, prefix));
+                }
+            }
+        } else if (jsCompletionContext == CompletionContext.OBJECT_PROPERTY_NAME) {
             TokenHierarchy<?> th = ccContext.getParserResult().getSnapshot().getTokenHierarchy();
             if (th == null) {
                 return Collections.EMPTY_LIST;
@@ -68,13 +77,10 @@ public class KendoUICodeCompletion implements CompletionProvider {
             if (ts == null) {
                 return Collections.EMPTY_LIST;
             }
-
             ts.move(eOffset);
-
             if (!ts.moveNext() && !ts.movePrevious()) {
                 return Collections.EMPTY_LIST;
             }
-
             Token<? extends JsTokenId> token = null;
             JsTokenId tokenId;
             //find the begining of the object literal
@@ -91,7 +97,6 @@ public class KendoUICodeCompletion implements CompletionProvider {
             if (token == null || balance != 0) {
                 return Collections.EMPTY_LIST;
             }
-
             // now we should be at the beginning of the object literal. 
             token = LexUtilities.findPreviousToken(ts, Arrays.asList(JsTokenId.IDENTIFIER));
             tokenId = token.id();
@@ -99,36 +104,30 @@ public class KendoUICodeCompletion implements CompletionProvider {
             while ((tokenId == JsTokenId.IDENTIFIER || tokenId == JsTokenId.OPERATOR_DOT) && ts.movePrevious()) {
                 token = ts.token();
                 tokenId = token.id();
-                if (tokenId == JsTokenId.OPERATOR_DOT) {
-                    sb.insert(0, '.'); // NOI18N
-                } else if (tokenId == JsTokenId.IDENTIFIER) {
+                if (tokenId == JsTokenId.IDENTIFIER) {
                     sb.insert(0, token.text());
                 }
             }
-
-            String fqnWithDot = sb.toString();
-            String fqn = fqnWithDot.substring(1).replace(".ui.", "");
-            Map<String, Collection<KendoUIDataItem>> data = getData();
-            Collection<KendoUIDataItem> items = data.get(fqn);
+            String currentComponent = sb.toString();
+            Set<KendoDataItem> attributes = getAttributes();
             int caretOffset = ccContext.getCaretOffset();
-            if (items != null) {
-                StatusDisplayer.getDefault().setStatusText(fqn + ": code completion shown.");
-                List<CompletionProposal> result = new ArrayList<CompletionProposal>();
-                for (KendoUIDataItem item : items) {
-                    if (fqn.startsWith(prefix)) {
-                        result.add(KendoUICompletionItem.createKendoUIItem(item, caretOffset));
+                for (KendoDataItem attribute : attributes) {
+                    if (attribute.getParent().equals(currentComponent)) {
+                        result.add(KendoCompletionProposal.createDemoItem(attribute, caretOffset, prefix));
                     }
                 }
-                return result;
-            }
+        } else {
+            return Collections.EMPTY_LIST;
         }
-        return Collections.EMPTY_LIST;
+        return result;
     }
 
     @Override
-    public String getHelpDocumentation(ParserResult info, ElementHandle element) {
-        if (element != null && element instanceof KendoUIElement) {
-            return ((KendoUIElement) element).getDocumentation();
+    public String getHelpDocumentation(
+            ParserResult pr,
+            ElementHandle eh) {
+        if (eh != null && eh instanceof KendoElementHandle) {
+            return ((KendoElementHandle) eh).getDocumentation();
         }
         return null;
     }

@@ -1,23 +1,25 @@
 package org.netbeans.modules.javascript2.kendo;
 
-/**
- *
- * @author Petr Pisl and Geertjan Wielenga
- */
-public class KendoUIDataItem {
+public class KendoDataItem {
+    private final String parent;
     
     private final String name;
     private final String type;
     private final String documentation;
     private final String template;
 
-    public KendoUIDataItem(String name, String type, String documentation, String template) {
+    public KendoDataItem(String parent, String name, String type, String documentation, String template) {
+        this.parent = parent;
         this.name = name;
         this.type = type;
         this.documentation = documentation;
         this.template = template;
     }
 
+    public String getParent() {
+        return parent;
+    }
+    
     public String getName() {
         return name;
     }
@@ -49,7 +51,7 @@ public class KendoUIDataItem {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final KendoUIDataItem other = (KendoUIDataItem) obj;
+        final KendoDataItem other = (KendoDataItem) obj;
         if ((this.name == null) ? (other.name != null) : !this.name.equals(other.name)) {
             return false;
         }

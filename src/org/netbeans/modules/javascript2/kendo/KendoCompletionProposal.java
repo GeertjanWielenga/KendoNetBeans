@@ -10,25 +10,23 @@ import org.netbeans.modules.csl.api.Modifier;
 import org.openide.util.ImageUtilities;
 import org.openide.util.NbBundle.Messages;
 
-/**
- *
- * @author Petr Pisl
- */
-public class KendoUICompletionItem implements CompletionProposal {
-    
-    static CompletionProposal createKendoUIItem(KendoUIDataItem item, int anchorOffset) {
-        ElementHandle element = new KendoUIElement(item.getName(), item.getDocumentation(), ElementKind.PROPERTY);
-        return new KendoUICompletionItem(item, anchorOffset, element);
+public class KendoCompletionProposal implements CompletionProposal {
+
+    static CompletionProposal createDemoItem(KendoDataItem item, int anchorOffset, String prefix) {
+        ElementHandle element = new KendoElementHandle(item.getName(), item.getDocumentation(), ElementKind.PROPERTY);
+        return new KendoCompletionProposal(item, anchorOffset, element, prefix);
     }
-    
+
     private final int anchorOffset;
     private final ElementHandle element;
-    private final KendoUIDataItem dataItem;
+    private final KendoDataItem dataItem;
+    private String prefix;
 
-    public KendoUICompletionItem(KendoUIDataItem item, int anchorOffset, ElementHandle element) {
+    public KendoCompletionProposal(KendoDataItem item, int anchorOffset, ElementHandle element, String prefix) {
         this.anchorOffset = anchorOffset;
         this.element = element;
         this.dataItem = item;
+        this.prefix = prefix;
     }
 
     @Override
@@ -69,10 +67,10 @@ public class KendoUICompletionItem implements CompletionProposal {
         return formatter.getText();
     }
 
-    @Messages("KendoUICompletionItem.lbl.kendoui.framework=Kendo UI")
+    @Messages("DemoCompletionItem.lbl.demo.framework=Demo")
     @Override
     public String getRhsHtml(HtmlFormatter formatter) {
-        return Bundle.KendoUICompletionItem_lbl_kendoui_framework();
+        return Bundle.DemoCompletionItem_lbl_demo_framework();
     }
 
     @Override
@@ -102,11 +100,7 @@ public class KendoUICompletionItem implements CompletionProposal {
 
     @Override
     public String getCustomInsertTemplate() {
-        if (dataItem.getTemplate() != null) {
-            return getName() + ": " + dataItem.getTemplate().trim(); //NOI18N
-        }
-        return null;
+        return getName().replace(prefix, ""); //NOI18N
     }
 
-    
 }
