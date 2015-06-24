@@ -32,13 +32,13 @@ public class KendoCompletionProvider implements CompletionProvider {
     private static synchronized List<File> getDataFiles() {
         File demoDataFolder = InstalledFileLocator.getDefault().locate(
                 "docs/api/javascript/ui",
-                "org.demo",
+                "org.netbeans.modules.javascript2.kendo",
                 false);
         for (FileObject fo : FileUtil.toFileObject(demoDataFolder).getChildren()) {
             String name = fo.getNameExt();
             demoPropertyFiles.add((InstalledFileLocator.getDefault().locate(
                     "docs/api/javascript/ui/" + name,
-                    "org.demo",
+                    "org.netbeans.modules.javascript2.kendo",
                     false)));
         }
         return demoPropertyFiles;
