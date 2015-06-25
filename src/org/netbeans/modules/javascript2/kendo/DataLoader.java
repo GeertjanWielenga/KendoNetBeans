@@ -24,7 +24,7 @@ public class DataLoader {
                 Pattern titlePattern = Pattern.compile(titleExpression);
                 Matcher titleMatcher = titlePattern.matcher(fileContent);
                 //Attribute:
-                String attributeExpression = "\\n### [A-Za-z.]+.*?###";
+                String attributeExpression = "(\\n###\\s)([A-Za-z]+)(\\s)";
                 Pattern attributePattern = Pattern.compile(attributeExpression, Pattern.DOTALL);
                 Matcher attributeMatcher = attributePattern.matcher(fileContent);
                 //Finders:
@@ -34,22 +34,19 @@ public class DataLoader {
                     if (type == 1) {
                         result.add(new KendoDataItem(null, formattedTitle, null, escapeHTML(fileContent), null));
                     } else if (type == 2) {
-                        while (attributeMatcher.find()) {
-                            String attribute = attributeMatcher.group();
-                            String lines[] = attribute.split("\\r?\\n");
-                            String attributeName = null;
-                            String attributeDescription = null;
-                            StringBuilder attributeDescriptionBuilder = new StringBuilder();
-                            for (int i = 0; i < lines.length; i++) {
-                                String line = lines[i];
-                                if (i==1){
-                                    attributeName = line.replaceAll("### ", " ");
-                                } else if (!line.isEmpty()){
-                                    attributeDescriptionBuilder.append(line);
-                                }
-                            }
-                            attributeDescription = attributeDescriptionBuilder.toString().replaceAll("###", "");
-                            result.add(new KendoDataItem(formattedTitle, attributeName, null, attributeDescription, null));
+                        boolean matches = attributeMatcher.find();
+                        if (matches) {
+                            do {
+                                int start = attributeMatcher.start();
+
+                                String attributeName = attributeMatcher.group(2);
+                                matches = attributeMatcher.find();
+
+                                int length = matches ? attributeMatcher.start() - start : fileContent.length() - start;
+
+                                String attributeDescription = fileContent.substring(start + 1, start + length);
+                                result.add(new KendoDataItem(formattedTitle, attributeName, null, attributeDescription, null));
+                            } while (matches);
                         }
                     }
                 }
