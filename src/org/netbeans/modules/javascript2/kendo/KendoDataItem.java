@@ -1,8 +1,9 @@
 package org.netbeans.modules.javascript2.kendo;
 
 public class KendoDataItem {
+
     private final String parent;
-    
+
     private final String name;
     private final String type;
     private final String documentation;
@@ -19,7 +20,7 @@ public class KendoDataItem {
     public String getParent() {
         return parent;
     }
-    
+
     public String getName() {
         return name;
     }
@@ -39,7 +40,8 @@ public class KendoDataItem {
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 47 * hash + (this.name != null ? this.name.hashCode() : 0);
+        hash = 59 * hash + (this.parent != null ? this.parent.hashCode() : 0);
+        hash = 59 * hash + (this.name != null ? this.name.hashCode() : 0);
         return hash;
     }
 
@@ -52,10 +54,13 @@ public class KendoDataItem {
             return false;
         }
         final KendoDataItem other = (KendoDataItem) obj;
+        if ((this.parent == null) ? (other.parent != null) : !this.parent.equals(other.parent)) {
+            return false;
+        }
         if ((this.name == null) ? (other.name != null) : !this.name.equals(other.name)) {
             return false;
         }
         return true;
     }
-    
+
 }

@@ -3,10 +3,8 @@ package org.netbeans.modules.javascript2.kendo;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import org.netbeans.api.lexer.Token;
 import org.netbeans.api.lexer.TokenHierarchy;
@@ -19,7 +17,6 @@ import org.netbeans.modules.javascript2.editor.api.lexer.JsTokenId;
 import org.netbeans.modules.javascript2.editor.api.lexer.LexUtilities;
 import org.netbeans.modules.javascript2.editor.spi.CompletionContext;
 import org.netbeans.modules.javascript2.editor.spi.CompletionProvider;
-import org.openide.awt.StatusDisplayer;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.modules.InstalledFileLocator;
@@ -111,11 +108,11 @@ public class KendoCompletionProvider implements CompletionProvider {
             String currentComponent = sb.toString();
             Set<KendoDataItem> attributes = getAttributes();
             int caretOffset = ccContext.getCaretOffset();
-                for (KendoDataItem attribute : attributes) {
-                    if (attribute.getParent().equals(currentComponent)) {
-                        result.add(KendoCompletionProposal.createDemoItem(attribute, caretOffset, prefix));
-                    }
+            for (KendoDataItem attribute : attributes) {
+                if (attribute.getParent().equals(currentComponent)) {
+                    result.add(KendoCompletionProposal.createDemoItem(attribute, caretOffset, prefix));
                 }
+            }
         } else {
             return Collections.EMPTY_LIST;
         }
