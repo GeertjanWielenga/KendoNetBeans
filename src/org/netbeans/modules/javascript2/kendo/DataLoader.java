@@ -13,19 +13,19 @@ import org.openide.util.Exceptions;
 public class DataLoader {
 
     private static final Set<KendoDataItem> result = new HashSet<KendoDataItem>();
+    //Title:
+    private static final String titleExpression = "title: [A-Za-z]+";
+    private static final Pattern titlePattern = Pattern.compile(titleExpression);
+    //Attribute:
+    private static final String attributeExpression = "(\\n###\\s)([A-Za-z]+)(\\s)";
+    private static final Pattern attributePattern = Pattern.compile(attributeExpression, Pattern.DOTALL);
 
     public static Set<KendoDataItem> getData(List<File> files, int type) {
         result.clear();
         for (File file : files) {
             try {
                 String fileContent = FileUtil.toFileObject(file).asText();
-                //Title:
-                String titleExpression = "title: [A-Za-z]+";
-                Pattern titlePattern = Pattern.compile(titleExpression);
                 Matcher titleMatcher = titlePattern.matcher(fileContent);
-                //Attribute:
-                String attributeExpression = "(\\n###\\s)([A-Za-z]+)(\\s)";
-                Pattern attributePattern = Pattern.compile(attributeExpression, Pattern.DOTALL);
                 Matcher attributeMatcher = attributePattern.matcher(fileContent);
                 //Finders:
                 //http://stackoverflow.com/questions/5516119/regular-expression-to-match-characters-at-beginning-of-line-only
